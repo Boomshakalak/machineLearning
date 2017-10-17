@@ -17,23 +17,30 @@ int n_fold;
 int n_epoch;
 double label_distribution;
 vector<instance> data;
+vector<int> Asubset; //store index of data with first label
+vector<int> Bsubset; // store index of data with second label
 
-void readData(string file,bool train);
-void getData(string line);
+void readData(const string file,bool train);
+void getData(const string line);
 int findNextComma(string s, int cur);
-void lb_dis(vector<instance>& data){
-	double a = 0;
-	for (auto x : data){
-		if (!x.label)a++;
+void inline lb_dis(const vector<instance>& data){
+	for (size_t i = 0 ; i < data.size(); i++){
+		if (data[i].label) Bsubset.push_back(i);
+		else Asubset.push_back(i);
 	}
-	label_distribution = a/data.size();
+	label_distribution = double(Asubset.size())/data.size();
 }
 int main(int argc, char const *argv[])
 {
 	/* code */
 	readData("sonar.arff", true);
 	lb_dis(data); // calculate the data distribution for the overall all data and store it in global variables
+	cout<<Asubset.size()<<endl;
+	cout<<Bsubset.size()<<endl;
 	cout<<label_distribution<<endl;
+	n_fold = 20;
+	n_epoch = 5;
+
 	// for (auto x : lab) cout<<x<<endl;
 	// cout<<"*****"<<endl;
 	// cout<<tp.feature.size()<<endl;
