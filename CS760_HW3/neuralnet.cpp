@@ -13,23 +13,35 @@ struct instance{
 };
 
 instance tp;
-
+int n_fold;
+int n_epoch;
+double label_distribution;
 vector<instance> data;
 
 void readData(string file,bool train);
 void getData(string line);
 int findNextComma(string s, int cur);
+void lb_dis(vector<instance>& data){
+	double a = 0;
+	for (auto x : data){
+		if (!x.label)a++;
+	}
+	label_distribution = a/data.size();
+}
 int main(int argc, char const *argv[])
 {
 	/* code */
 	readData("sonar.arff", true);
+	lb_dis(data); // calculate the data distribution for the overall all data and store it in global variables
+	cout<<label_distribution<<endl;
 	// for (auto x : lab) cout<<x<<endl;
 	// cout<<"*****"<<endl;
 	// cout<<tp.feature.size()<<endl;
-	for (auto x : data){
-		for (auto t : x.feature)cout<<t<<"__";
-		cout<< "label:"<<x.label<<endl;
-	}
+	// for (auto x : data){
+	// 	for (auto t : x.feature)cout<<t<<"__";
+	// 	cout<< "label:"<<x.label<<endl;
+	// }
+
 	return 0;
 }
 
