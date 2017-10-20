@@ -3,6 +3,9 @@
 using namespace std;
 
 vector<string> lab;
+double inline sigmoid(double x){
+	return 1.0/(1.0+exp(-x));
+}
 struct instance{
 	vector<double> feature;
 	int label;
@@ -15,10 +18,13 @@ struct instance{
 instance tp;
 int n_fold;
 int n_epoch;
+double learning_rate;
 double label_distribution;
 vector<instance> data;
-unordered_set<int> Asubset; //store index of data with first label
-unordered_set<int> Bsubset; // store index of data with second label
+vector<int> Asubset; //store index of data with first label
+vector<int> Bsubset; // store index of data with second label
+vector<vector<int>> folds;  // split the data into folds
+
 
 /*
 	weights for input layers w1, and for hidden layer w2
@@ -29,11 +35,13 @@ vector<double> w2;
 
 void readData(const string file,bool train);
 void getData(const string line);
-int findNextComma(string s, int cur);
+int findNextComma(const string s, int cur);
+void updateWeight(const instance& ins);
+void TrainNetWork();
 void inline lb_dis(const vector<instance>& data){
 	for (size_t i = 0 ; i < data.size(); i++){
-		if (data[i].label) Bsubset.insert(i);
-		else Asubset.insert(i);
+		if (data[i].label) Bsubset.push_back(i);
+		else Asubset.push_back(i);
 	}
 	label_distribution = double(Asubset.size())/data.size();
 }
@@ -51,23 +59,41 @@ void initWeight(){
 		w = double(rand()%1000000-500000)/500000;
 	}
 }
+void getfolds(){
+	folds = vector<vector<int>>(n_fold,vector<int>());
+	// auto rng = default_random_engine {};
+	// shuffle(begin(Asubset), std::end(Asubset), rng);
+	// shuffle(begin(Bsubset), std::end(Bsubset), rng);
+	srand(unsigned(time(NULL)));
+	random_shuffle(Asubset.begin(), Asubset.end());
+	random_shuffle(Bsubset.begin(), Bsubset.end());
+	int j = 0;
+	for (int i = 0 ; i < Asubset.size();i++){
+		folds[i % n_fold].push_back(Asubset[i]);
+	}
+	for (int i = 0 ; i < Bsubset.size();i++){
+		folds[n_fold-j-1].push_back(Bsubset[i]);
+		j = (j+1)%n_fold;
+	}
+	
+}
 int main(int argc, char const *argv[])
 {
 	/* code */
 	readData("sonar.arff", true);
-	initWeight();
+	// initWeight();
 	lb_dis(data); // calculate the data distribution for the overall all data and store it in global variables
-	initWeight();
-	for (auto x : w1[3])cout<<x<<"  ";
-	cout<<endl;
-	for (auto x : w2)cout<<x<<" ";
-	cout<<endl;
 	// cout<<Asubset.size()<<endl;
 	// cout<<Bsubset.size()<<endl;
-	cout<<label_distribution<<endl;
 	n_fold = 20;
 	n_epoch = 5;
-
+	learning_rate = 0.1;
+	getfolds();
+	for (auto x : folds){
+		for (auto t : x)cout<<t<<lab[data[t].label]<<" ";
+		cout<<endl;
+	}
+	TrainNetWork();
 	// for (auto x : lab) cout<<x<<endl;
 	// cout<<"*****"<<endl;
 	// cout<<tp.feature.size()<<endl;
@@ -118,7 +144,7 @@ void readData(string file,bool train){
 	else cout<< "file read error"<<endl;
 }
 
-void getData(string line){
+void getData(const string line){
 	data.push_back(tp);
 	int j= -1;
 	for (int i = 0 ; i < tp.feature.size();i++){
@@ -135,9 +161,31 @@ void getData(string line){
 		}
 	}
 }
-int findNextComma(string line,int cur){
+int findNextComma(const string line,int cur){
 	for (int i = cur; i < line.size(); i++){
 		if (line[i] == ',') return i;
 	}
 	return line.size();
+}
+void TrainNetWork(){
+	for (int i = 0 ; i < n_fold; i++){  // i is the index of test data folds
+		initWeight();
+		for (int j = 0 ; j < n_fold;j++){
+			if (i == j) continue;
+			else{
+				for (int k = 0 ; k < folds[j].size();k++){
+					updateWeight(data[folds[j][k]]);
+				}
+			}
+		}
+	}
+}
+void updateWeight(const instance& ins){
+	vector<double> feature_vector = ins.feature;
+	feature_vector.push_back(1); // add a biased unit
+	vector<double> alpha(ins.feature.size(),0);
+	alpha.push_back(1);
+	for (int i = 0; i < feature_vector.size();i++){
+
+	}
 }
