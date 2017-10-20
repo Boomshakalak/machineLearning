@@ -89,11 +89,12 @@ int main(int argc, char const *argv[])
 	n_epoch = 5;
 	learning_rate = 0.1;
 	getfolds();
-	for (auto x : folds){
-		for (auto t : x)cout<<t<<lab[data[t].label]<<" ";
-		cout<<endl;
-	}
+	// for (auto x : folds){
+	// 	for (auto t : x)cout<<t<<lab[data[t].label]<<" ";
+	// 	cout<<endl;
+	// }
 	TrainNetWork();
+	cout<<"Done"<<endl;
 	// for (auto x : lab) cout<<x<<endl;
 	// cout<<"*****"<<endl;
 	// cout<<tp.feature.size()<<endl;
@@ -170,11 +171,13 @@ int findNextComma(const string line,int cur){
 void TrainNetWork(){
 	for (int i = 0 ; i < n_fold; i++){  // i is the index of test data folds
 		initWeight();
-		for (int j = 0 ; j < n_fold;j++){
-			if (i == j) continue;
-			else{
-				for (int k = 0 ; k < folds[j].size();k++){
-					updateWeight(data[folds[j][k]]);
+		for (int e = 0 ; e < n_epoch;e++){
+			for (int j = 0 ; j < n_fold;j++){
+				if (i == j) continue;
+				else{
+					for (int k = 0 ; k < folds[j].size();k++){
+						updateWeight(data[folds[j][k]]);
+					}
 				}
 			}
 		}
@@ -183,9 +186,31 @@ void TrainNetWork(){
 void updateWeight(const instance& ins){
 	vector<double> feature_vector = ins.feature;
 	feature_vector.push_back(1); // add a biased unit
-	vector<double> alpha(ins.feature.size(),0);
-	alpha.push_back(1);
+	vector<double> beta(ins.feature.size(),0);
+	// beta.push_back(1);
 	for (int i = 0; i < feature_vector.size();i++){
-
+		for (int j =0; j < beta.size();j++){
+			beta[j]+= w1[j][i]*feature_vector[i];
+		}
 	}
+	// vector<double> beta = alpha;
+	for (auto& x : beta){
+		x = sigmoid(x);
+	}
+	beta.push_back(1);
+	double s = 0;
+	for (int i = 0 ; i < beta.size();i++){
+		s+= beta[i]*w2[i];
+	}
+	double y = sigmoid(s);
+	double t = y<0.5?0:1;
+	for (int i = 0 ; i < w1.size();i++){
+		for (int j = 0 ; j < w1[i].size();j++){
+			w1[i][j]-= learning_rate*(y-t)*w2[i]*beta[i]*(1-beta[i])*feature_vector[j];
+		}
+	}
+	for (int i = 0 ; i < w2.size();i++){
+		w2[i] -= learning_rate*(y-t)*beta[i];
+	}
+
 }
