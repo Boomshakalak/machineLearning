@@ -104,14 +104,24 @@ int main(int argc, char const *argv[])
 	// initWeight();
 	lb_dis(data); // calculate the data distribution for the overall all data and store it in global variables
 
-	n_fold = 10;
+	n_fold = 0;
 	n_epoch = 50;
 	learning_rate = 0.1;
-	getfolds();
-	TrainNetWork();
-	for (int i = 0 ; i <data.size();i++){
-		cout<<foldmatch[i]<<" "<<lab[result[i].first]<<" "<<lab[data[i].label]<<" "<<result[i].second<<endl;
+	
+	for (int i =0 ; i < 5; i++){
+		n_fold+=5;
+		cout<<"# of n_fold:"<<n_fold<<endl;
+		getfolds();
+		TrainNetWork();
+
+		cout<<"Acccuracy:"<<1.0*correct/(correct+wrong)<<endl;
+		correct = 0;
+		wrong = 0;
 	}
+	TrainNetWork();
+	// for (int i = 0 ; i <data.size();i++){
+	// 	cout<<foldmatch[i]<<" "<<lab[result[i].first]<<" "<<lab[data[i].label]<<" "<<result[i].second<<endl;
+	// }
 	cout<<1.0*correct/(correct+wrong)<<endl;
 
 	return 0;

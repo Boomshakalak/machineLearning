@@ -1,0 +1,9 @@
+# of n_epoch:25
+Acccuracy:0.788462
+# of n_epoch:50
+Acccuracy:0.8125
+# of n_epoch:75
+Acccuracy:0.826923
+# of n_epoch:100
+Acccuracy:0.836538
+0.831731

@@ -1,0 +1,11 @@
+# of n_fold:5
+Acccuracy:0.846154
+# of n_fold:10
+Acccuracy:0.774038
+# of n_fold:15
+Acccuracy:0.846154
+# of n_fold:20
+Acccuracy:0.802885
+# of n_fold:25
+Acccuracy:0.860577
+0.822115

@@ -35,10 +35,11 @@ vector<instance> data;
 vector<int> Asubset; //store index of data with first label
 vector<int> Bsubset; // store index of data with second label
 vector<vector<int>> folds;  // split the data into folds
-int correct = 0;
-int wrong = 0;
+int TP = 0;
+int FP = 0;
 unordered_map<int,pair<int,double>> result;
 unordered_map<int,int> foldmatch;
+double confidence;
 /*
 	weights for input layers w1, and for hidden layer w2
 
@@ -108,11 +109,11 @@ int main(int argc, char const *argv[])
 	n_epoch = 50;
 	learning_rate = 0.1;
 	getfolds();
-	TrainNetWork();
-	for (int i = 0 ; i <data.size();i++){
-		cout<<foldmatch[i]<<" "<<lab[result[i].first]<<" "<<lab[data[i].label]<<" "<<result[i].second<<endl;
+	for (int i =0 ; i < 20;i++){
+		confidence=(i+1)*0.05;
+		TrainNetWork();
 	}
-	cout<<1.0*correct/(correct+wrong)<<endl;
+	
 
 	return 0;
 }
@@ -177,9 +178,11 @@ int findNextComma(string line,int cur){
 	return line.size();
 }
 void TrainNetWork(){
-
+	TP = 0;
+	FP = 0;
 	for (int i = 0 ; i < n_fold; i++){  // i is the index of test data folds
 		initWeight();
+		
 		for (int e = 0 ; e < n_epoch;e++){
 			for (int j = 0 ; j < n_fold;j++){
 				if (i-j){
@@ -194,6 +197,9 @@ void TrainNetWork(){
 			cmpLabel(x);
 		}
 	}
+	cout<<"confidence:"<<confidence<<endl;
+	cout<<"TP-rate:"<<double(TP)/Bsubset.size()<<endl;
+	cout<<"FP-rate:"<<double(FP)/Asubset.size()<<endl;
 		
 }
 void updateWeight(int k){
@@ -242,7 +248,8 @@ void cmpLabel(int k){
 	v.push_back(1.0);
 	vector<double> r = firstLayerResult(v);
 	double res = secondLayerResult(r);
-	int pLabel = (res<0.5)?0:1;
-	pLabel==t.label?correct++:wrong++;
+	int pLabel = (res<confidence)?0:1;
+	if (pLabel && pLabel==t.label)TP++;
+	if (pLabel && pLabel!=t.label)FP++;
 	result[k] = {pLabel,res};
 }
