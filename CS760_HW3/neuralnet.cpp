@@ -3,18 +3,28 @@
 using namespace std;
 
 vector<string> lab;
-double inline si(double x){
-	return 1.0/(1.0+exp(-x));
+double si(double x){
+        return 1/(1+exp(-x));
 }
+
 struct instance{
 	vector<double> feature;
-	int label;
+	double label;
 	// int fold;
 	instance(){
 		this->feature = vector<double>();
 		this->label = 0;
 	}
 };
+
+void readData(string file,bool train);
+void getData(string line);
+int findNextComma(string s, int cur);
+void updateWeight(int k);
+void TrainNetWork();
+vector<double> firstLayerResult(vector<double>& feature_vector);
+double secondLayerResult(vector<double>& beta);
+void cmpLabel(int k);
 
 instance tp;
 int n_fold;
@@ -35,25 +45,19 @@ int wrong = 0;
 vector<vector<double>> w1;
 vector<double> w2;
 
-void readData(string file,bool train);
-void getData(string line);
-int findNextComma(string s, int cur);
-void updateWeight(instance& ins);
-void TrainNetWork();
-vector<double> firstLayerResult(vector<double>& feature_vector);
-double secondLayerResult(vector<double>& beta);
-void cmpLabel(int k);
 void printweight(){
+	int i  = 0;
 	cout<<"w1 "<<endl;
-	cout<<w1[0].size()<<endl;
-	for (auto wi : w1[0]){
+	// cout<<w1[0].size()<<endl;
+	for (auto wi : w1){
+		cout<<i++<<endl;
 		// cout<<wi.size()<<endl;
-		cout<<wi<<endl;
-		// cout<<endl; 
+		for (auto w : wi)cout<<w<<" ";
+		cout<<endl; 
 	}
 	cout<<"w2"<<endl;
-	for (auto w : w2)cout<<w<<endl;
-	// cout<<endl;
+	for (auto w : w2)cout<<w<<" " ;
+	cout<<endl;
 }
 void inline lb_dis(vector<instance>& data){
 	for (size_t i = 0 ; i < data.size(); i++){
@@ -65,17 +69,17 @@ void inline lb_dis(vector<instance>& data){
 void initWeight(){
 	w1.clear();
 	w2.clear();
-	w1 = vector<vector<double>>(tp.feature.size(),vector<double>(tp.feature.size()+1));
-	w2 = w1[0];
+	w1 = vector<vector<double>>(tp.feature.size(),vector<double>(tp.feature.size()+1,0));
+	w2 = vector<double>(tp.feature.size()+1,0);
 	for (auto& x : w1){
 		for (auto& w : x){
-			// srand(time(NULL));
-			w = double(rand()%1000000-500000)/500000;
+			w = double(rand())/RAND_MAX*2-1;
+			
 		}
 	}
 	for (auto& w : w2){
-		// srand(time(NULL));
-		w = double(rand()%1000000-500000)/500000;
+		w = double(rand())/RAND_MAX*2-1;
+		
 	}
 }
 void getfolds(){
@@ -97,7 +101,7 @@ void getfolds(){
 		j = (j+1)%n_fold;
 	}
 	for (int i = 0 ; i < folds.size();i++){
-		srand(unsigned(time(NULL)));
+		// srand(unsigned(time(NULL)));
 		random_shuffle(folds[i].begin(),folds[i].end());
 	}
 	
@@ -108,38 +112,16 @@ int main(int argc, char const *argv[])
 	readData("sonar.arff", true);
 	// initWeight();
 	lb_dis(data); // calculate the data distribution for the overall all data and store it in global variables
-	// cout<<Asubset.size()<<endl;
-	// cout<<Bsubset.size()<<endl;
+
 	n_fold = 20;
 	n_epoch = 50;
-	learning_rate = 0.01;
-	getfolds();
-	// for (auto x : folds){
-	// 	for (auto t : x)cout<<t<<lab[data[t].label]<<" ";
-	// 	cout<<endl;
-	// }
-	// initWeight();
-	// printweight();
-	// cout<<"Test output of data[0]"<<endl;
-	// auto t = data[0];
-	// auto f = t.feature;
-	// cout<< "feature"<<endl;
-	// for (auto m : f)cout<<m<<endl;
-	// f.push_back(1);
-	// auto beta = firstLayerResult(f);
-	// for (auto x: beta)cout<<x<<" ";
-	TrainNetWork();
-	// for (int i = 1 ; i < 100;i++)cout<<si(i)<<endl;
-	cout<<1.0*correct/(correct+wrong)<<endl;
-	// cout<<correct+wrong<<endl;
-	cout<<"Done"<<endl;
-	// for (auto x : lab) cout<<x<<endl;
-	// cout<<"*****"<<endl;
+	learning_rate = 0.1;
 	// cout<<tp.feature.size()<<endl;
-	// for (auto x : data){
-	// 	for (auto t : x.feature)cout<<t<<"__";
-	// 	cout<< "label:"<<x.label<<endl;
-	// }
+	getfolds();
+
+	TrainNetWork();
+	cout<<1.0*correct/(correct+wrong)<<endl;
+	cout<<"Done"<<endl;
 
 	return 0;
 }
@@ -209,50 +191,45 @@ int findNextComma(string line,int cur){
 }
 void TrainNetWork(){
 
-	for (int i = 0 ; i < 1; i++){  // i is the index of test data folds
+	for (int i = 0 ; i < n_fold; i++){  // i is the index of test data folds
 		initWeight();
 		// printweight();
 		for (int e = 0 ; e < n_epoch;e++){
 			for (int j = 0 ; j < n_fold;j++){
 				if (i-j){
 					for (int k = 0; k < folds[j].size();k++){
-						// cout<<folds[j][k]<<" ";
-						// updateWeight(data[folds[j][k]]);
+						updateWeight(folds[j][k]);
+						
 					}
 				}
-				// cout<<endl;
+
 			}
 			}
-			// printweight();
 			for (int x :folds[i]){
 			cout<<i<<" ";
 			cmpLabel(x);
 		}
 		}
-		// if (i==0) printweight();
 		
 	}
-void updateWeight(instance& ins){
-	vector<double> feature_vector = ins.feature;
-	feature_vector.push_back(1);
-	// for (auto t : feature_vector) cout<<t<<" ";
-	// cout<<endl;
+void updateWeight(int k){
+	vector<double> feature_vector = data[k].feature;
+	feature_vector.push_back(1.0);
 	vector<double> beta = firstLayerResult(feature_vector);
 	double y = secondLayerResult(beta);
-	double t = y<0.5?0:1;
+	double t = data[k].label;
 	for (int i = 0 ; i < w1.size();i++){
-		for (int j = 0 ; j < w1[i].size();j++){
-			double z  = learning_rate*(y-t)*w2[i]*beta[i]*(1-beta[i])*feature_vector[j];
-			w1[i][j]-= z;
-			// cout<<z<<endl;
+		double sj = (y - t) * w2[i]*beta[i]*(1-beta[i]);
+		for (int j = 0 ; j < feature_vector.size();j++){
+			w1[i][j] -= learning_rate*sj*feature_vector[j];
+		}
 	}
 	for (int i = 0 ; i < w2.size();i++){
-		double z = learning_rate*(y-t)*beta[i];
-		w2[i] -= z;
-		// cout<<z<<endl;
+		w2[i] -= learning_rate*(y-t)*beta[i];
+		
 	}
 
-}
+
 }
 vector<double> firstLayerResult(vector<double>& feature_vector){
 	vector<double> res(tp.feature.size(),0);
@@ -266,8 +243,8 @@ vector<double> firstLayerResult(vector<double>& feature_vector){
 	for (int i = 0 ; i < res.size();i++){
 		res[i] = si(res[i]);
 	}
-	res.push_back(1);
-	if (res.size()!=61) cout<<"error"<<endl;
+	res.push_back(1.0);
+	// if (res.size()!=61) cout<<"error"<<endl;
 	// cout<<res.size()<<endl;
 	return res;
 }
@@ -276,27 +253,20 @@ double secondLayerResult(vector<double>& beta){
 	for (int i = 0 ; i < beta.size();i++){
 		s+= beta[i]*w2[i];
 	}
-	cout<<s<<endl;
-	// double y = sigmoid(s);
+	// cout<<s<<endl;
+	// double y = si(s);
 	// cout<<"hello!"<<y<<endl;
 	return si(s);
 }
 void cmpLabel(int k){
 	cout<<k<<" ";
-	auto t = data[k];
-	// for (auto ti:t.feature){
-	// 	cout<<ti<<" ";
-	// }
-	// cout<<endl;
-	vector<double> v = t.feature;
-	v.push_back(1);
+	auto& t = data[k];
+	vector<double> v = data[k].feature;
+	v.push_back(1.0);
 	vector<double> r = firstLayerResult(v);
-	// for (auto m : r){
-	// 	cout<<m<<"&";
-	// }
-	// cout<<endl;
 	double res = secondLayerResult(r);
-	int pLabel = res<0.5?0:1;
+	int pLabel = (res<0.5)?0:1;
 	pLabel==t.label?correct++:wrong++;
 	cout<<lab[pLabel]<<" "<<lab[t.label]<<" "<<res<<endl;
+
 }
